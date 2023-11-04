@@ -160,7 +160,7 @@ def main(cfg: DictConfig):
             score_th=cfg.post_process.score_th,
             distance=cfg.post_process.distance,
         )
-    sub_df.write_csv(Path(cfg.dir.sub_dir) / "submission.csv")
+    sub_df.to_csv(Path(cfg.dir.sub_dir) / "submission.csv", index=False)
 
 
 if __name__ == "__main__":
