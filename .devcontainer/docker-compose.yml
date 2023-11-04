@@ -1,0 +1,23 @@
+version: '3'
+services:
+  playground:                 # `devcontainer.json`の'service'と一致させる
+    container_name: 'CMI-TUBO-BASE'  # コンテナ名
+    hostname: 'python'        # ホスト名.ゲストOSのシェルに表示されるので指定している
+
+    # 以下は他のリポジトリも全て同じ設定にしています
+    build: .                  # Dockerfileがあるディレクトリ
+    shm_size: '54gb'
+    restart: always           # 常に再起動
+    working_dir: '/kaggle' # デフォルトの作業ディレクトリ
+    tty: true                 # コンテナを終了させずに待たせる
+    volumes:                  # ホストとゲストのディレクトリを紐づける
+      - type: bind            # ホストのディレクトリをゲストにマウントさせる
+        source: ../  # ホストの`workspace`ディレクトリを指定
+        target: /kaggle    # ゲストの`/workspace`にマウントさせる
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

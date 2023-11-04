@@ -1,0 +1,36 @@
+{
+  // dev container名(どこに使われてるかよくわかってない)
+  "name": "kaggle-docker",
+  // 今回は docker-compose.ymlを利用する。全リポジトリ共通にしてます。
+  "dockerComposeFile": "docker-compose.yml",
+  // docker-compose.yml内のサービス名を指定。全リポジトリ共通にしてます。
+  "service": "playground",
+  // コンテナのどこにワークスペースを配置するかの指定。全リポジトリ共通にしてます。
+  "workspaceFolder": "/kaggle",
+  // ゲストOSでの実行ユーザ。全リポジトリ共通にしてます。
+  "remoteUser": "root",
+  // ゲストOSの設定を変更する場合に利用する設定
+  "customizations": {
+    // VSCodeのデフォルトの設定を変更します
+    // 'settings'を指定すればここでVSCodeの設定変更も可能
+    // 今回のポリシーとして拡張はこのファイルに記載
+    // VSCodeの動作変更は'workspace/.vscode/settings.json'に記載としています
+    "vscode": {
+      // 事前にゲストOS上のVSCodeで利用する拡張をインストールします
+      "extensions": [
+        // 全リポジトリにインストール
+        "EditorConfig.EditorConfig",
+        // 以下 python用の拡張
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        // "ms-python.flake8",
+        // "ms-python.autopep8",
+        "njpwerner.autodocstring",
+        "ms-python.black-formatter",
+        "mhutchie.git-graph",
+        "github.copilot",
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}
