@@ -71,6 +71,7 @@ class SegModel(LightningModule):
                 prog_bar=True,
             )
         elif mode == "val":
+            # ここで元のサイズに戻す
             resized_logits = resize(
                 logits.sigmoid().detach().cpu(),
                 size=[self.duration, logits.shape[2]],
