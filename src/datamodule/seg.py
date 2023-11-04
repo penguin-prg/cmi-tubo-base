@@ -45,6 +45,9 @@ def load_chunk_features(
     processed_dir: Path,
     phase: str,
 ) -> dict[str, np.ndarray]:
+    """
+    durationの間隔でチャンクを作ってfeatureを返す
+    """
     features = {}
 
     if series_ids is None:
@@ -142,6 +145,8 @@ def nearest_valid_size(input_size: int, downsample_rate: int) -> int:
     """
     (x // hop_length) % 32 == 0
     を満たすinput_sizeに最も近いxを返す
+    
+    ダウンサンプリング後を32の倍数にするのはUnetのためかな？
     """
 
     while (input_size // downsample_rate) % 32 != 0:
@@ -208,8 +213,8 @@ class TrainDataset(Dataset):
 
         return {
             "series_id": series_id,
-            "feature": feature,  # (num_features, upsampled_num_frames)
-            "label": torch.FloatTensor(label),  # (pred_length, num_classes)
+            "feature": feature,  # (num_features, upsampled_num_frames), upsampled_num_framesはダウンサンプリングされる前の長さ
+            "label": torch.FloatTensor(label),  # (pred_length, num_classes), pred_lengthはダウンサンプリングされた後の長さ
         }
 
 
@@ -222,7 +227,7 @@ class ValidDataset(Dataset):
     ):
         self.cfg = cfg
         self.chunk_features = chunk_features
-        self.keys = list(chunk_features.keys())
+        self.keys = list(chunk_features.keys()) # seriesid_chunkid のリスト
         self.event_df = (
             event_df.pivot(index=["series_id", "night"], columns="event", values="step")
             .drop_nulls()
