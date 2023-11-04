@@ -102,40 +102,13 @@ def make_submission(
     keys: list[str], preds: np.ndarray, downsample_rate, score_th, distance
 ) -> pl.DataFrame:
     
-
-    _, train = post_process_for_seg(
+    sub = post_process_for_seg(
         keys=keys,
         preds=preds[:, :, [1, 2]],
         score_th=0.02,
         distance=10,
-        ret_oof_df=True,
+        penguin_pp=True,
     )
-
-    dfs = []
-    df = train[["series_id", "step", "wakeup_oof"]].copy()
-    df["event"] = "wakeup"
-    df["score"] = df["wakeup_oof"]
-    dfs.append(df[['series_id', 'step', 'event', 'score']])
-
-    df = train[["series_id", "step", "onset_oof"]].copy()
-    df["event"] = "onset"
-    df["score"] = df["onset_oof"]
-    dfs.append(df[['series_id', 'step', 'event', 'score']])
-
-    train = pd.concat(dfs)
-    train["score"] *= 10
-    train["step"] = train["step"].astype(int)
-    train = train[train["score"]>0.005].reset_index(drop=True)
-    print(len(train))
-
-    groups = [group for _, group in train.groupby("series_id")]
-    with Pool(30) as p:  
-        results = list(tqdm(p.imap(dynamic_range_nms, groups), total=len(groups)))
-    sub = pd.concat(results).reset_index(drop=True)
-    sub["score"] = sub["reduced_score"]
-
-    sub["row_id"] = sub.index
-    sub = sub[["row_id", "series_id", "step", "event", "score"]]
     return sub
 
 

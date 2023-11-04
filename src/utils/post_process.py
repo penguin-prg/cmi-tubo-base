@@ -4,7 +4,7 @@ from scipy.signal import find_peaks
 import pandas as pd
 
 def post_process_for_seg(
-    keys: list[str], preds: np.ndarray, score_th: float = 0.01, distance: int = 5000, ret_oof_df: bool = False
+    keys: list[str], preds: np.ndarray, score_th: float = 0.01, distance: int = 5000, penguin_pp: bool = False
 ) -> pl.DataFrame:
     """make submission dataframe for segmentation task
 
@@ -25,7 +25,7 @@ def post_process_for_seg(
         series_idx = np.where(series_ids == series_id)[0]
         this_series_preds = preds[series_idx].reshape(-1, 2)
 
-        if ret_oof_df:
+        if penguin_pp:
             oof_df = pd.DataFrame({
                 "series_id": series_id,
                 "step": np.arange(len(this_series_preds)),
@@ -62,9 +62,34 @@ def post_process_for_seg(
     sub_df = pl.DataFrame(records).sort(by=["series_id", "step"])
     row_ids = pl.Series(name="row_id", values=np.arange(len(sub_df)))
     sub_df = sub_df.with_columns(row_ids).select(["row_id", "series_id", "step", "event", "score"])
-    if ret_oof_df:
-        oof_df = pd.concat(dfs, axis=0).reset_index(drop=True)
-        return sub_df, oof_df
+    if penguin_pp:
+        final_dfs = []
+        for train in dfs:
+            this_dfs = []
+            df = train[["series_id", "step", "wakeup_oof"]].copy()
+            df["event"] = "wakeup"
+            df["score"] = df["wakeup_oof"]
+            this_dfs.append(df[['series_id', 'step', 'event', 'score']])
+
+            df = train[["series_id", "step", "onset_oof"]].copy()
+            df["event"] = "onset"
+            df["score"] = df["onset_oof"]
+            this_dfs.append(df[['series_id', 'step', 'event', 'score']])
+
+            train = pd.concat(this_dfs)
+            train["score"] *= 10
+            train["step"] = train["step"].astype(int)
+            train = train[train["score"]>0.005].reset_index(drop=True)
+
+            sub = dynamic_range_nms(train)
+            sub["score"] = sub["reduced_score"]
+            final_dfs.append(sub)
+
+        sub = pd.concat(final_dfs).reset_index(drop=True)
+        sub["row_id"] = sub.index
+        sub = sub[["row_id", "series_id", "step", "event", "score"]]
+        return sub
+
     else:
         return sub_df
 
