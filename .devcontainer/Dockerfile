@@ -8,3 +8,6 @@ USER root
 RUN apt install git --yes
 
 # competition specific
+RUN hydra-core>=1.3.2
+RUN pip uninstall polars --yes
+RUN pip install polars>=0.18.9
