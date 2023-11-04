@@ -82,8 +82,8 @@ from typing import Optional
 from scipy.interpolate import interp1d
 
 
-RANGE = 917
-COEFF = 11
+RANGE = 261
+COEFF = 28
 EXP = 5
 
 def dynamic_range_nms(df: pd.DataFrame) -> pd.DataFrame:
