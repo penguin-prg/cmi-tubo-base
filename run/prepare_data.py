@@ -26,6 +26,7 @@ FEATURE_NAMES = [
     "month_cos",
     "minute_sin",
     "minute_cos",
+    "same_count",
 ]
 
 ANGLEZ_MEAN = -8.810476
@@ -41,8 +42,34 @@ def to_coord(x: pl.Expr, max_: int, name: str) -> list[pl.Expr]:
 
     return [x_sin.alias(f"{name}_sin"), x_cos.alias(f"{name}_cos")]
 
+def calculate_same_count(df):
+    DAY_STEPS = 12 * 60 * 24
+    n_days = int(len(df) // DAY_STEPS) + 1
+    # same_countカラムを初期化
+    df = df.with_columns(pl.lit(0).alias("same_count"))
+
+    for day in range(-n_days, n_days + 1):
+        if day == 0:
+            continue
+        # anglezのDAY_STEPS * dayだけずらした差分を計算
+        anglez_diff = df["anglez"].shift(DAY_STEPS * day).fill_null(1) - df["anglez"]
+        # same_countをインクリメント
+        df = df.with_columns(pl.when(anglez_diff == 0).then(1).otherwise(0).alias("_increment"))
+        df = df.with_columns([
+            (pl.col("same_count") + pl.col("_increment")).alias("same_count")
+        ])
+
+    # same_countをクリップして正規化
+    df = df.with_columns(
+        ((pl.col("same_count").clip(0, 5) - 2.5) / 2.5).alias("same_count")
+    )
+
+    # 中間カラムをドロップ
+    return df.drop("_increment")
+
 
 def add_feature(series_df: pl.DataFrame) -> pl.DataFrame:
+    series_df = calculate_same_count(series_df)
     series_df = series_df.with_columns(
         *to_coord(pl.col("timestamp").dt.hour(), 24, "hour"),
         *to_coord(pl.col("timestamp").dt.month(), 12, "month"),
