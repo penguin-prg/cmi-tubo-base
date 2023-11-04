@@ -11,3 +11,4 @@ RUN apt install git --yes
 RUN hydra-core>=1.3.2
 RUN pip uninstall polars --yes
 RUN pip install polars>=0.18.9
+RUN pip install segmentation_models_pytorch

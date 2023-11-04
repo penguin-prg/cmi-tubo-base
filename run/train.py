@@ -11,7 +11,7 @@ from pytorch_lightning.callbacks import (
     RichModelSummary,
     RichProgressBar,
 )
-from pytorch_lightning.loggers import WandbLogger
+# from pytorch_lightning.loggers import WandbLogger
 
 from src.datamodule.seg import SegDataModule
 from src.modelmodule.seg import SegModel
@@ -45,11 +45,11 @@ def main(cfg: DictConfig):  # type: ignore
     progress_bar = RichProgressBar()
     model_summary = RichModelSummary(max_depth=2)
 
-    # init experiment logger
-    pl_logger = WandbLogger(
-        name=cfg.exp_name,
-        project="child-mind-institute-detect-sleep-states",
-    )
+    # # init experiment logger
+    # pl_logger = WandbLogger(
+    #     name=cfg.exp_name,
+    #     project="child-mind-institute-detect-sleep-states",
+    # )
 
     trainer = Trainer(
         # env
@@ -64,7 +64,7 @@ def main(cfg: DictConfig):  # type: ignore
         gradient_clip_val=cfg.gradient_clip_val,
         accumulate_grad_batches=cfg.accumulate_grad_batches,
         callbacks=[checkpoint_cb, lr_monitor, progress_bar, model_summary],
-        logger=pl_logger,
+        # logger=pl_logger,
         # resume_from_checkpoint=resume_from,
         num_sanity_val_steps=0,
         log_every_n_steps=int(len(datamodule.train_dataloader()) * 0.1),
