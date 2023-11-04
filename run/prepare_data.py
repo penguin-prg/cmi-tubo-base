@@ -117,9 +117,9 @@ def main(cfg: DictConfig):
                 (pl.col("anglez") - ANGLEZ_MEAN) / ANGLEZ_STD,
                 (pl.col("enmo") - ENMO_MEAN) / ENMO_STD,
             )
-            .select([pl.col("series_id"), pl.col("anglez"), pl.col("enmo"), pl.col("timestamp")])
+            .select([pl.col("series_id"), pl.col("anglez"), pl.col("enmo"), pl.col("timestamp"), pl.col("step")])
             .collect(streaming=True)
-            .sort(by=["series_id", "timestamp"])
+            .sort(by=["series_id", "step"])
         )
         n_unique = series_df.get_column("series_id").n_unique()
     with trace("Save features"):
