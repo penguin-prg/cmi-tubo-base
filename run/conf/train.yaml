@@ -37,8 +37,8 @@ monitor_mode: min
 check_val_every_n_epoch: 1
 
 # Dataset
-offset: 10
-sigma: 10
+offset: 54
+sigma: 18
 bg_sampling_rate: 0.5
 
 # augmentation
