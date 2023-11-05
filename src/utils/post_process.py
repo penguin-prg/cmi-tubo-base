@@ -90,7 +90,7 @@ def post_process_for_seg(
         sub = pd.concat(final_dfs).reset_index(drop=True)
         sub["row_id"] = sub.index
         sub = sub[["row_id", "series_id", "step", "event", "score"]]
-        return sub
+        return sub, dfs
 
     else:
         return sub_df
