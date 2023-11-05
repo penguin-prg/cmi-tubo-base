@@ -98,18 +98,18 @@ def inference(
     return keys, preds  # type: ignore
 
 
-def make_submission(
-    keys: list[str], preds: np.ndarray, downsample_rate, score_th, distance
-) -> pl.DataFrame:
+# def make_submission(
+#     keys: list[str], preds: np.ndarray, downsample_rate, score_th, distance
+# ) -> pl.DataFrame:
     
-    sub = post_process_for_seg(
-        keys=keys,
-        preds=preds[:, :, [1, 2]],
-        score_th=0.02,
-        distance=10,
-        penguin_pp=True,
-    )
-    return sub
+#     sub = post_process_for_seg(
+#         keys=keys,
+#         preds=preds[:, :, [1, 2]],
+#         score_th=0.02,
+#         distance=10,
+#         penguin_pp=True,
+#     )
+#     return sub
 
 
 @hydra.main(config_path="conf", config_name="inference", version_base="1.2")
@@ -125,15 +125,18 @@ def main(cfg: DictConfig):
     with trace("inference"):
         keys, preds = inference(cfg.duration, test_dataloader, model, device, use_amp=cfg.use_amp)
 
-    with trace("make submission"):
-        sub_df = make_submission(
-            keys,
-            preds,
-            downsample_rate=cfg.downsample_rate,
-            score_th=cfg.post_process.score_th,
-            distance=cfg.post_process.distance,
-        )
-    sub_df.to_csv(Path(cfg.dir.sub_dir) / "submission.csv", index=False)
+    np.save("keys.npy", np.array(keys))
+    np.save("preds.npy", preds)
+
+    # with trace("make submission"):
+    #     sub_df = make_submission(
+    #         keys,
+    #         preds,
+    #         downsample_rate=cfg.downsample_rate,
+    #         score_th=cfg.post_process.score_th,
+    #         distance=cfg.post_process.distance,
+    #     )
+    # sub_df.to_csv(Path(cfg.dir.sub_dir) / "submission.csv", index=False)
 
 
 if __name__ == "__main__":
