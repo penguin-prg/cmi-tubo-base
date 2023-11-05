@@ -65,21 +65,23 @@ def post_process_for_seg(
     if penguin_pp:
         final_dfs = []
         for train in dfs:
+            train[["wakeup_oof", "onset_oof"]] *= 10
+            train["step"] = train["step"].astype(int)
+
             this_dfs = []
             df = train[["series_id", "step", "wakeup_oof"]].copy()
             df["event"] = "wakeup"
             df["score"] = df["wakeup_oof"]
+            df = df[df["score"]>0.005]
             this_dfs.append(df[['series_id', 'step', 'event', 'score']])
 
             df = train[["series_id", "step", "onset_oof"]].copy()
             df["event"] = "onset"
             df["score"] = df["onset_oof"]
+            df = df[df["score"]>0.005]
             this_dfs.append(df[['series_id', 'step', 'event', 'score']])
 
-            train = pd.concat(this_dfs)
-            train["score"] *= 10
-            train["step"] = train["step"].astype(int)
-            train = train[train["score"]>0.005].reset_index(drop=True)
+            train = pd.concat(this_dfs).reset_index(drop=True)
 
             sub = dynamic_range_nms(train)
             sub["score"] = sub["reduced_score"]
