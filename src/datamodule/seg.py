@@ -59,11 +59,12 @@ def load_chunk_features(
         for feature_name in feature_names:
             this_feature.append(np.load(series_dir / f"{feature_name}.npy"))
         this_feature = np.stack(this_feature, axis=1)
-        num_chunks = (len(this_feature) // duration) + 1
-        for i in range(num_chunks):
-            chunk_feature = this_feature[i * duration : (i + 1) * duration]
+        assert duration % 4 == 0
+        for chink_id, start in enumerate(range(0, this_feature.shape[0], duration // 4)):
+            end = start + duration
+            chunk_feature = this_feature[start: end]
             chunk_feature = pad_if_needed(chunk_feature, duration, pad_value=0)  # type: ignore
-            features[f"{series_id}_{i:07}"] = chunk_feature
+            features[f"{series_id}_{chink_id:07}_{start}_{end}"] = chunk_feature # sid_chunkid_start_end
 
     return features  # type: ignore
 
@@ -251,10 +252,9 @@ class ValidDataset(Dataset):
             antialias=False,
         ).squeeze(0)
 
-        series_id, chunk_id = key.split("_")
-        chunk_id = int(chunk_id)
-        start = chunk_id * self.cfg.duration
-        end = start + self.cfg.duration
+        series_id, _, start, end = key.split("_")
+        start = int(start)
+        end = int(end)
         num_frames = self.upsampled_num_frames // self.cfg.downsample_rate
         label = get_label(
             self.event_df.query("series_id == @series_id").reset_index(drop=True),

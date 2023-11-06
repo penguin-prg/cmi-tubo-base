@@ -17,13 +17,26 @@ def post_process_for_seg(
         pl.DataFrame: submission dataframe
     """
     series_ids = np.array(list(map(lambda x: x.split("_")[0], keys)))
+    starts = np.array(list(map(lambda x: int(x.split("_")[2]), keys)))
+    ends = np.array(list(map(lambda x: int(x.split("_")[3]), keys)))
     unique_series_ids = np.unique(series_ids)
 
     records = []
     dfs = []
     for series_id in unique_series_ids:
         series_idx = np.where(series_ids == series_id)[0]
-        this_series_preds = preds[series_idx].reshape(-1, 2)
+        this_series_preds = preds[series_idx] #.reshape(-1, 2)
+        this_series_starts = starts[series_idx]
+        this_series_ends = ends[series_idx]
+
+        # 集約
+        max_step = this_series_ends.max()
+        agg_preds = np.zeros((max_step, 2))
+        agg_counts = np.zeros((max_step, 2))
+        for i, (start, end) in enumerate(zip(this_series_starts, this_series_ends)):
+            agg_preds[start:end] += this_series_preds[i]
+            agg_counts[start:end] += 1
+        this_series_preds = agg_preds / agg_counts
 
         if penguin_pp:
             oof_df = pd.DataFrame({
