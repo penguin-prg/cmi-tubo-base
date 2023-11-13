@@ -27,6 +27,9 @@ FEATURE_NAMES = [
     "minute_sin",
     "minute_cos",
     "same_count",
+    "same_count_shift_plus",
+    "same_count_shift_minus",
+    "large_diff_count",
 ]
 
 ANGLEZ_MEAN = -8.810476
@@ -63,6 +66,12 @@ def calculate_same_count(df):
     df = df.with_columns(
         ((pl.col("same_count").clip(0, 5) - 2.5) / 2.5).alias("same_count")
     )
+
+    SHIFT_STEPS = 12 * 60 * 6  # 6h
+    df = df.with_columns([
+        pl.col("same_count").shift(SHIFT_STEPS).fill_null(1.0).alias("same_count_shift_plus"),
+        pl.col("same_count").shift(-SHIFT_STEPS).fill_null(1.0).alias("same_count_shift_minus")
+    ])
 
     # 中間カラムをドロップ
     return df.drop("_increment")
@@ -110,6 +119,21 @@ def main(cfg: DictConfig):
         else:
             raise ValueError(f"Invalid phase: {cfg.phase}")
 
+        series_lf = series_lf.with_columns([
+            pl.col("anglez").diff().fill_null(0).abs().alias("anglez_diffabs"),
+        ])
+        series_lf = series_lf.with_columns([
+            (pl.col("anglez_diffabs") > 5).cast(pl.Int32).alias("large_diff"),
+        ])
+        series_lf = series_lf.with_columns([        
+            pl.col("large_diff").rolling_mean(window_size=10, min_periods=1).fill_null(0).alias("large_diff_count")
+        ])
+
+        # Adjusting the 'large_diff_count' as per the final operation
+        series_lf = series_lf.with_columns(
+            ((pl.col("large_diff_count") - 0.5) * 2).alias("large_diff_count")
+        )
+
         # preprocess
         series_df = (
             series_lf.with_columns(
@@ -117,7 +141,14 @@ def main(cfg: DictConfig):
                 (pl.col("anglez") - ANGLEZ_MEAN) / ANGLEZ_STD,
                 (pl.col("enmo") - ENMO_MEAN) / ENMO_STD,
             )
-            .select([pl.col("series_id"), pl.col("anglez"), pl.col("enmo"), pl.col("timestamp"), pl.col("step")])
+            .select([
+                pl.col("series_id"), 
+                pl.col("anglez"), 
+                pl.col("enmo"), 
+                pl.col("timestamp"), 
+                pl.col("step"), 
+                pl.col("large_diff_count"),
+            ])
             .collect(streaming=True)
             .sort(by=["series_id", "step"])
         )

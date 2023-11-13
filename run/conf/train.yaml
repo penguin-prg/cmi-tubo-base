@@ -63,13 +63,12 @@ labels:
 features:
   - "anglez"
   - "enmo"
-  # - "month_sin"
-  # - "month_cos"
   - "hour_sin"
   - "hour_cos"
-  # - "minute_sin"
-  # - "minute_cos"
   - "same_count"
+  - "same_count_shift_plus"
+  - "same_count_shift_minus"
+  - "large_diff_count"
 
 # optimizer
 optimizer:
