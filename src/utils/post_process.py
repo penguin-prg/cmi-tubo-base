@@ -80,6 +80,7 @@ def post_process_for_seg(
         for train in dfs:
             train[["wakeup_oof", "onset_oof"]] *= 10
             train["step"] = train["step"].astype(int)
+            train = train[train["step"] % 12 == 6]
 
             this_dfs = []
             df = train[["series_id", "step", "wakeup_oof"]].copy()
