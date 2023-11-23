@@ -19,25 +19,43 @@ from src.utils.common import trace
 from src.utils.post_process import post_process_for_seg, dynamic_range_nms
 
 
+class EnsembleModel(nn.Module):
+    def __init__(self, models):
+        super().__init__()
+        self.models = nn.ModuleList(models)
+
+    def forward(self, x):
+        outs = []
+        for model in self.models:
+            outs.append(model(x)["logits"])
+        outs = torch.stack(outs).mean(0)
+        return {"logits": outs}
+
+
+
 def load_model(cfg: DictConfig) -> nn.Module:
     num_timesteps = nearest_valid_size(int(cfg.duration * cfg.upsample_rate), cfg.downsample_rate)
-    model = get_model(
-        cfg,
-        feature_dim=len(cfg.features),
-        n_classes=len(cfg.labels),
-        num_timesteps=num_timesteps // cfg.downsample_rate,
-    )
-
-    # load weights
-    if cfg.weight is not None:
-        weight_path = (
-            Path(cfg.dir.model_dir)
-            / cfg.weight["exp_name"]
-            / cfg.weight["run_name"]
-            / "best_model.pth"
+    models = []
+    for fold in range(5):
+        model = get_model(
+            cfg,
+            feature_dim=len(cfg.features),
+            n_classes=len(cfg.labels),
+            num_timesteps=num_timesteps // cfg.downsample_rate,
         )
-        model.load_state_dict(torch.load(weight_path))
-        print('load weight from "{}"'.format(weight_path))
+
+        # load weights
+        if cfg.weight is not None:
+            weight_path = (
+                Path(cfg.dir.model_dir)
+                / cfg.weight["exp_name"][:-1] + str(fold)
+                / cfg.weight["run_name"]
+                / "best_model.pth"
+            )
+            model.load_state_dict(torch.load(weight_path))
+            print('load weight from "{}"'.format(weight_path))
+        models.append(model)
+    model = EnsembleModel(models)        
     return model
 
 
