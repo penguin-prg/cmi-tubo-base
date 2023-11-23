@@ -87,12 +87,16 @@ def post_process_for_seg(
             df["event"] = "wakeup"
             df["score"] = df["wakeup_oof"]
             df = df[df["score"]>0.005]
+            if len(df) == 0:
+                df = pd.DataFrame({"series_id": [0], "step": [0], "event": ["wakeup"], "score": [0]})
             this_dfs.append(df[['series_id', 'step', 'event', 'score']])
 
             df = train[["series_id", "step", "onset_oof"]].copy()
             df["event"] = "onset"
             df["score"] = df["onset_oof"]
             df = df[df["score"]>0.005]
+            if len(df) == 0:
+                df = pd.DataFrame({"series_id": [0], "step": [0], "event": ["onset"], "score": [0]})
             this_dfs.append(df[['series_id', 'step', 'event', 'score']])
 
             train = pd.concat(this_dfs).reset_index(drop=True)
