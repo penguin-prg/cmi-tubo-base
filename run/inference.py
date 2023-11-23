@@ -48,7 +48,7 @@ def load_model(cfg: DictConfig) -> nn.Module:
         if cfg.weight is not None:
             weight_path = (
                 Path(cfg.dir.model_dir)
-                / cfg.weight["exp_name"][:-1] + str(fold)
+                / (cfg.weight["exp_name"][:-1] + str(fold))
                 / cfg.weight["run_name"]
                 / "best_model.pth"
             )
