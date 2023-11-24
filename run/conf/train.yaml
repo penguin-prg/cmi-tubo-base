@@ -14,7 +14,7 @@ defaults:
   - dir: local
   - model: Spec2DCNN
   - feature_extractor: CNNSpectrogram
-  - decoder: UNet1DDecoder
+  - decoder: LSTMDecoder
   - split: fold_0
 
 seed: 42
@@ -37,8 +37,8 @@ monitor_mode: min
 check_val_every_n_epoch: 1
 
 # Dataset
-offset: 54
-sigma: 18
+offset: 108
+sigma: 36
 bg_sampling_rate: 0.5
 
 # augmentation

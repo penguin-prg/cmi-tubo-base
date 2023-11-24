@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # 定数定義
-DOWNSAMPLE_RATE=2
+DOWNSAMPLE_RATE=12
 DURATION=5760
-EXP_NAME=exp019
+EXP_NAME=exp_tmp
 BATCH_SIZE=32
 
 # fold 0から4までループ
-for fold in {0..4}
+for fold in {0..0}
 do
   # トレーニングコマンド実行
   python run/train.py \

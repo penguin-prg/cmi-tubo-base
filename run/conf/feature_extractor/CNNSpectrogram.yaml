@@ -1,5 +1,5 @@
 name: CNNSpectrogram
-base_filters: 64
+base_filters: 128
 kernel_sizes:
   - 32
   - 16

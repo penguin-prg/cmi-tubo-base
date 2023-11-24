@@ -2,4 +2,4 @@ name: TransformerDecoder
 hidden_size: 256
 num_layers: 4
 nhead: 4
-dropout: 0.2
+dropout: 0
