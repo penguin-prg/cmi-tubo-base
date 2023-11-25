@@ -177,8 +177,11 @@ class UNet1DDecoder(nn.Module):
             128, 64, bilinear, scale_factor, norm=partial(create_layer_norm, length=self.duration)
         )
 
+        
+        self.rnn = nn.GRU(64, 64, num_layers=2, batch_first=True, bidirectional=True)   
+
         self.cls = nn.Sequential(
-            nn.Conv1d(64, 64, kernel_size=3, padding=1),
+            nn.Conv1d(128, 64, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv1d(64, self.n_classes, kernel_size=1, padding=0),
             nn.Dropout(dropout),
@@ -207,6 +210,10 @@ class UNet1DDecoder(nn.Module):
         x = self.up2(x, x3)
         x = self.up3(x, x2)
         x = self.up4(x, x1)
+
+        x = x.transpose(1, 2)
+        x, _ = self.rnn(x)
+        x = x.transpose(1, 2)
 
         # classifier
         logits = self.cls(x)  # (batch_size, n_classes, n_timesteps)

@@ -12,7 +12,7 @@ class TransformerDecoder(nn.Module):
         dropout: float,
         nhead: int,
         n_classes: int,
-        max_len: int=5760 // 2,
+        max_len: int=5760 // 12,
     ):
         super().__init__()
         self.conv = nn.Conv1d(input_size, hidden_size, 1)
