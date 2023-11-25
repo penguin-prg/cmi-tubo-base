@@ -55,3 +55,5 @@ features:
   - "hour_sin"
   - "hour_cos"
   - "same_count"
+  - "large_diff_count"
+  - "large_diff_max"

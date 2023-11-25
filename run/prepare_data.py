@@ -27,6 +27,8 @@ FEATURE_NAMES = [
     "minute_sin",
     "minute_cos",
     "same_count",
+    "large_diff_count",
+    "large_diff_max",
 ]
 
 ANGLEZ_MEAN = -8.810476
@@ -110,14 +112,39 @@ def main(cfg: DictConfig):
         else:
             raise ValueError(f"Invalid phase: {cfg.phase}")
 
+        # large diff count
+        series_lf = series_lf.with_columns([
+            pl.col("anglez").diff().over("series_id").fill_null(0).abs().alias("anglez_diffabs"),
+        ])
+        series_lf = series_lf.with_columns([
+            (pl.col("anglez_diffabs") > 5).cast(pl.Int32).alias("large_diff"),
+        ])
+        series_lf = series_lf.with_columns([        
+            pl.col("large_diff").rolling_mean(window_size=10, min_periods=1).over("series_id").fill_null(0).alias("large_diff_count")
+        ])
+        series_lf = series_lf.with_columns(
+            ((pl.col("large_diff_count") - 0.5) * 2).alias("large_diff_count")
+        )
+        series_lf = series_lf.with_columns([        
+            pl.col("large_diff").rolling_max(window_size=12*5, min_periods=1).over("series_id").fill_null(0).alias("large_diff_max")
+        ])
+
         # preprocess
         series_df = (
             series_lf.with_columns(
                 pl.col("timestamp").str.to_datetime("%Y-%m-%dT%H:%M:%S%z"),
                 (pl.col("anglez") - ANGLEZ_MEAN) / ANGLEZ_STD,
                 (pl.col("enmo") - ENMO_MEAN) / ENMO_STD,
-            )
-            .select([pl.col("series_id"), pl.col("anglez"), pl.col("enmo"), pl.col("timestamp"), pl.col("step")])
+            )            
+            .select([
+                pl.col("series_id"), 
+                pl.col("anglez"), 
+                pl.col("enmo"), 
+                pl.col("timestamp"), 
+                pl.col("step"), 
+                pl.col("large_diff_count"),
+                pl.col("large_diff_max"),
+            ])
             .collect(streaming=True)
             .sort(by=["series_id", "step"])
         )

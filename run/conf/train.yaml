@@ -32,8 +32,8 @@ use_amp: true
 debug: false
 gradient_clip_val: 1.0
 accumulate_grad_batches: 1
-monitor: val_loss
-monitor_mode: min
+monitor: val_score
+monitor_mode: max
 check_val_every_n_epoch: 1
 
 # Dataset
@@ -70,6 +70,8 @@ features:
   # - "minute_sin"
   # - "minute_cos"
   - "same_count"
+  - "large_diff_count"
+  - "large_diff_max"
 
 # optimizer
 optimizer:
