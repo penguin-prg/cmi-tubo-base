@@ -181,7 +181,7 @@ class UNet1DDecoder(nn.Module):
             nn.Conv1d(64, 64, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv1d(64, self.n_classes, kernel_size=1, padding=0),
-            nn.Dropout(dropout),
+            # nn.Dropout(dropout),
         )
         self.loss_fn = nn.BCEWithLogitsLoss()
 

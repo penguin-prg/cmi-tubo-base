@@ -110,20 +110,21 @@ class SegModel(LightningModule):
         losses = np.array([x[3] for x in self.validation_step_outputs])
         loss = losses.mean()
 
-        val_pred_df = post_process_for_seg(
+        val_pred_df, _ = post_process_for_seg(
             keys=keys,
             preds=preds[:, :, [1, 2]],
             score_th=self.cfg.post_process.score_th,
             distance=self.cfg.post_process.distance,
+            penguin_pp=True,
         )
-        score = event_detection_ap(self.val_event_df.to_pandas(), val_pred_df.to_pandas())
+        score = event_detection_ap(self.val_event_df.to_pandas(), val_pred_df)
         self.log("val_score", score, on_step=False, on_epoch=True, logger=True, prog_bar=True)
 
         if score > self.best_score:
             np.save("keys.npy", np.array(keys))
             np.save("labels.npy", labels)
             np.save("preds.npy", preds)
-            val_pred_df.write_csv("val_pred_df.csv")
+            val_pred_df.to_csv("val_pred_df.csv", index=False)
             torch.save(self.model.state_dict(), "best_model.pth")
             print(f"Saved best model {self.best_score} -> {score}")
             self.best_score = score

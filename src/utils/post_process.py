@@ -2,6 +2,7 @@ import numpy as np
 import polars as pl
 from scipy.signal import find_peaks
 import pandas as pd
+from multiprocessing import Pool
 
 def post_process_for_seg(
     keys: list[str], preds: np.ndarray, score_th: float = 0.01, distance: int = 5000, penguin_pp: bool = False
@@ -76,36 +77,35 @@ def post_process_for_seg(
     row_ids = pl.Series(name="row_id", values=np.arange(len(sub_df)))
     sub_df = sub_df.with_columns(row_ids).select(["row_id", "series_id", "step", "event", "score"])
     if penguin_pp:
-        final_dfs = []
-        for train in dfs:
-            train[["wakeup_oof", "onset_oof"]] *= 10
-            train["step"] = train["step"].astype(int)
-            train = train[train["step"] % 12 == 6]
+        train = pd.concat(dfs).reset_index(drop=True)
+        train["step"] = train["step"].astype(int)
+        train = train[train["step"] % 12 == 6]
 
-            this_dfs = []
-            df = train[["series_id", "step", "wakeup_oof"]].copy()
-            df["event"] = "wakeup"
-            df["score"] = df["wakeup_oof"]
-            df = df[df["score"]>0.005]
-            if len(df) == 0:
-                df = pd.DataFrame({"series_id": [0], "step": [0], "event": ["wakeup"], "score": [0]})
-            this_dfs.append(df[['series_id', 'step', 'event', 'score']])
+        this_dfs = []
+        df = train[["series_id", "step", "wakeup_oof"]].copy()
+        df["event"] = "wakeup"
+        df["score"] = df["wakeup_oof"]
+        df = df[df["score"]>0.005]
+        if len(df) == 0:
+            df = pd.DataFrame({"series_id": [0], "step": [0], "event": ["wakeup"], "score": [0]})
+        this_dfs.append(df[['series_id', 'step', 'event', 'score']])
 
-            df = train[["series_id", "step", "onset_oof"]].copy()
-            df["event"] = "onset"
-            df["score"] = df["onset_oof"]
-            df = df[df["score"]>0.005]
-            if len(df) == 0:
-                df = pd.DataFrame({"series_id": [0], "step": [0], "event": ["onset"], "score": [0]})
-            this_dfs.append(df[['series_id', 'step', 'event', 'score']])
+        df = train[["series_id", "step", "onset_oof"]].copy()
+        df["event"] = "onset"
+        df["score"] = df["onset_oof"]
+        df = df[df["score"]>0.005]
+        if len(df) == 0:
+            df = pd.DataFrame({"series_id": [0], "step": [0], "event": ["onset"], "score": [0]})
+        this_dfs.append(df[['series_id', 'step', 'event', 'score']])
+        train = pd.concat(this_dfs).reset_index(drop=True)
 
-            train = pd.concat(this_dfs).reset_index(drop=True)
+        train["step"] = train["step"].astype(int)
+        groups = [group for _, group in train.groupby("series_id")]
+        with Pool(30) as p:
+            results = list(p.imap(dynamic_range_nms, groups))
+        sub = pd.concat(results).reset_index(drop=True)
+        sub["score"] = sub["reduced_score"]
 
-            sub = dynamic_range_nms(train)
-            sub["score"] = sub["reduced_score"]
-            final_dfs.append(sub)
-
-        sub = pd.concat(final_dfs).reset_index(drop=True)
         sub["row_id"] = sub.index
         sub = sub[["row_id", "series_id", "step", "event", "score"]]
         return sub, dfs
