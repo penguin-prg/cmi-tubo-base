@@ -209,8 +209,10 @@ class TrainDataset(Dataset):
         num_frames = self.upsampled_num_frames // self.cfg.downsample_rate
         label = get_label(this_event_df, num_frames, self.cfg.duration, start, end)
         label[:, [1, 2]] = gaussian_label(
-            label[:, [1, 2]], offset=self.cfg.offset, sigma=self.cfg.sigma
-        )
+                label[:, [1, 2]], 
+                offset=self.cfg.offset // self.cfg.downsample_rate, 
+                sigma=self.cfg.sigma // self.cfg.downsample_rate,
+            )
 
         return {
             "series_id": series_id,
