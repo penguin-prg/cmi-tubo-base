@@ -116,6 +116,16 @@ class SegModel(LightningModule):
             score_th=self.cfg.post_process.score_th,
             distance=self.cfg.post_process.distance,
         )
+
+        if len(val_pred_df) > 50 * 2000 and self.current_epoch < 5:
+            # scoreの上位のみを残す
+            val_pred_df = val_pred_df.sort(by="score").tail(50 * 2000)
+
+            # row_idを0, 1, ..., 50 * 2000に振り直す
+            val_pred_df = val_pred_df.with_columns(
+                pl.Series(np.arange(len(val_pred_df))).alias("row_id")
+            )
+
         score = event_detection_ap(self.val_event_df.to_pandas(), val_pred_df.to_pandas())
         self.log("val_score", score, on_step=False, on_epoch=True, logger=True, prog_bar=True)
 

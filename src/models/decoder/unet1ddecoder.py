@@ -177,12 +177,14 @@ class UNet1DDecoder(nn.Module):
             128, 64, bilinear, scale_factor, norm=partial(create_layer_norm, length=self.duration)
         )
 
-        self.cls = nn.Sequential(
-            nn.Conv1d(64, 64, kernel_size=3, padding=1),
+        self.rnn = nn.GRU(64, 64, num_layers=2, batch_first=True, bidirectional=True)
+        self.linear_out = nn.Sequential(
+            nn.Linear(64 * 2, 64),
+            nn.LayerNorm(64),
             nn.ReLU(),
-            nn.Conv1d(64, self.n_classes, kernel_size=1, padding=0),
-            nn.Dropout(dropout),
+            nn.Linear(64, n_classes),
         )
+
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def forward(
@@ -208,6 +210,7 @@ class UNet1DDecoder(nn.Module):
         x = self.up3(x, x2)
         x = self.up4(x, x1)
 
-        # classifier
-        logits = self.cls(x)  # (batch_size, n_classes, n_timesteps)
-        return logits.transpose(1, 2)  # (batch_size, n_timesteps, n_classes)
+        x = x.transpose(1, 2)
+        x, _ = self.rnn(x)
+        x = self.linear_out(x)  # (batch_size, n_timesteps, n_classes)
+        return x
