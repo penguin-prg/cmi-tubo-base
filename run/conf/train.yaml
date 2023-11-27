@@ -70,8 +70,14 @@ features:
   # - "minute_sin"
   # - "minute_cos"
   - "same_count"
-  - "large_diff_count"
-  - "large_diff_max"
+  - "large_diff_count_1"
+  - "large_diff_count_5"
+  - "large_diff_max_1"
+  - "large_diff_max_5"
+  - "anglez_range_1"
+  - "anglez_range_5"
+  - "enmo_mean_1"
+  - "enmo_mean_5"
 
 # optimizer
 optimizer:

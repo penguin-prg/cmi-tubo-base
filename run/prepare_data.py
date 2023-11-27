@@ -27,8 +27,14 @@ FEATURE_NAMES = [
     "minute_sin",
     "minute_cos",
     "same_count",
-    "large_diff_count",
-    "large_diff_max",
+    "large_diff_count_1",
+    "large_diff_count_5",
+    "large_diff_max_1",
+    "large_diff_max_5",
+    "anglez_range_1",
+    "anglez_range_5",
+    "enmo_mean_1",
+    "enmo_mean_5",
 ]
 
 ANGLEZ_MEAN = -8.810476
@@ -119,15 +125,23 @@ def main(cfg: DictConfig):
         series_lf = series_lf.with_columns([
             (pl.col("anglez_diffabs") > 5).cast(pl.Int32).alias("large_diff"),
         ])
-        series_lf = series_lf.with_columns([        
-            pl.col("large_diff").rolling_mean(window_size=10, min_periods=1).over("series_id").fill_null(0).alias("large_diff_count")
-        ])
-        series_lf = series_lf.with_columns(
-            ((pl.col("large_diff_count") - 0.5) * 2).alias("large_diff_count")
-        )
-        series_lf = series_lf.with_columns([        
-            pl.col("large_diff").rolling_max(window_size=12*5, min_periods=1).over("series_id").fill_null(0).alias("large_diff_max")
-        ])
+        for m in [1, 5]:
+            series_lf = series_lf.with_columns([        
+                pl.col("large_diff").rolling_mean(window_size=12*m, min_periods=1, center=True).over("series_id").fill_null(0).alias(f"large_diff_count_{m}")
+            ])
+            series_lf = series_lf.with_columns([        
+                pl.col("large_diff").rolling_max(window_size=12*m, min_periods=1, center=True).over("series_id").fill_null(0).alias(f"large_diff_max_{m}")
+            ])
+
+            series_lf = series_lf.with_columns([
+                (pl.col("anglez").rolling_max(window_size=12*m, min_periods=1, center=True).over("series_id").fill_null(0) \
+                - pl.col("anglez").rolling_min(window_size=12*m, min_periods=1, center=True).over("series_id").fill_null(0)) \
+                .alias(f"anglez_range_{m}") / ANGLEZ_STD
+            ])
+
+            series_lf = series_lf.with_columns([
+                pl.col("enmo").rolling_mean(window_size=12*m, min_periods=1, center=True).over("series_id").fill_null(0).alias(f"enmo_mean_{m}") / ENMO_STD
+            ])
 
         # preprocess
         series_df = (
@@ -142,8 +156,14 @@ def main(cfg: DictConfig):
                 pl.col("enmo"), 
                 pl.col("timestamp"), 
                 pl.col("step"), 
-                pl.col("large_diff_count"),
-                pl.col("large_diff_max"),
+                pl.col("large_diff_count_1"),
+                pl.col("large_diff_count_5"),
+                pl.col("large_diff_max_1"),
+                pl.col("large_diff_max_5"),
+                pl.col("anglez_range_1"),
+                pl.col("anglez_range_5"),
+                pl.col("enmo_mean_1"),
+                pl.col("enmo_mean_5"),
             ])
             .collect(streaming=True)
             .sort(by=["series_id", "step"])
