@@ -57,3 +57,5 @@ features:
   - "same_count"
   - "large_diff_count"
   - "large_diff_max"
+  - "is_longest_sleep_episode"
+  - "is_sleep_block"
