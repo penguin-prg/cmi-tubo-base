@@ -1,81 +1,20 @@
-# Child Mind Institute - Detect Sleep States
+# How to Reproduce (for Competition Organizers)
+## Hardware
+- CPU: Intel Core i9 13900KF (24 cores, 32 threads)
+- GPU: NVIDIA GeForce RTX 4090
+- RAM: 64GB
 
-This repository is for [Child Mind Institute - Detect Sleep States](https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/overview)
+## OS/platform
+- WSL2 (version 2.0.9.0, Ubuntu 22.04.2 LTS)
 
-## Build Environment
-### 1. install [rye](https://github.com/mitsuhiko/rye)
+## 3rd-party software
+Please check the dockerfile in `/kaggle/.devcontainer`
 
-[install documentation](https://rye-up.com/guide/installation/#installing-rye)
-
-MacOS
-```zsh
-curl -sSf https://rye-up.com/get | bash
-echo 'source "$HOME/.rye/env"' >> ~/.zshrc
-source ~/.zshrc
-```
-
-Linux
-```bash
-curl -sSf https://rye-up.com/get | bash
-echo 'source "$HOME/.rye/env"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-Windows  
-see [install documentation](https://rye-up.com/guide/installation/)
-
-### 2. Create virtual environment
-
-```bash
-rye sync
-```
-
-### 3. Activate virtual environment
-
-```bash
-. .venv/bin/activate
-```
-
-### Set path
-Rewrite run/conf/dir/local.yaml to match your environment
-
-```yaml
-data_dir: 
-processed_dir: 
-output_dir: 
-model_dir: 
-sub_dir: ./
-```
-
-## Prepare Data
-
-### 1. Download data
-
-```bash
-cd data
-kaggle competitions download -c child-mind-institute-detect-sleep-states
-unzip child-mind-institute-detect-sleep-states.zip
-```
-
-### 2. Preprocess data
-
-```bash
-rye run python -m run/prepare_data.py phase=train,test
-```
-
-## Train Model
-The following commands are for training the model of LB0.714
-```bash
-rye run python run/train.py downsample_rate=2 duration=5760 exp_name=exp001 batch_size=32
-```
-
-## Upload Model
-```bash
-rye run python run/tools.py upload_dataset.py
-```
-
-## Inference
-The following commands are for inference of LB0.714 
-```bash
-rye run python run/inference.py dir=kaggle exp_name=exp001 weight.run_name=single downsample_rate=2 duration=5760 model.encoder_weights=null post_process.score_th=0.005 post_process.distance=40 phase=test
-```
+## Training
+1. Upload competition dataset in `/kaggle/data`
+    - i.e. `/kaggle/data/train_series.parquet`, etc...
+2. Run following commands to prepare dataset:
+    - `python /kaggle/run/prepare_data.py phase=train`
+3. Run follwing commands to train models:
+    - `/kaggle/run/train_cv_exp031.sh`
+    - `/kaggle/run/train_cv_exp061.sh`

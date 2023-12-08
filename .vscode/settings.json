@@ -7,10 +7,8 @@
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "[python]": {
     "editor.codeActionsOnSave": {
-      // isortの並び替えをRuffで実行
-      "source.organizeImports": true,
-      // blackのフォーマットをRuffで実行
-      "source.fixAll": true,
+      "source.organizeImports": "explicit",
+      "source.fixAll": "explicit"
     },
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true
