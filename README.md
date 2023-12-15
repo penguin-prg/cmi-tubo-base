@@ -1,4 +1,5 @@
-This is my part of 4th Place Solution for the Child Mind Institute - Detect Sleep States (Kaggle competition).
+This is part of my part of 4th Place Solution for the Child Mind Institute - Detect Sleep States (Kaggle competition).
+My main part is [here](https://github.com/penguin-prg/child-mind-institute-detect-sleep-states).
 detail document: https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/discussion/459597
 
 This repository is based on [this excellent repository](https://github.com/tubo213/kaggle-child-mind-institute-detect-sleep-states/tree/main) by @tubo213.
